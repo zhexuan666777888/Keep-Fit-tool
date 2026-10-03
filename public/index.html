@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fit Tool - Keep校园跑数据生成器</title>
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="sidebar">
+        <div class="form-group">
+          <label for="mapSource">地图源</label>
+          <select id="mapSource">
+            <option value="tianditu_vec">天地图 · 矢量（默认）</option>
+            <option value="tianditu_img">天地图 · 卫星影像</option>
+            <option value="tianditu_ter">天地图 · 地形</option>
+            <option value="osm">OpenStreetMap（备用）</option>
+            <option value="esri_sat">Esri · 世界影像</option>
+          </select>
+          <div class="token-row">
+            <input id="tkInput" type="text" placeholder="自定义天地图 Token（可选）" spellcheck="false" autocomplete="off">
+            <button id="saveTkBtn" type="button">保存</button>
+          </div>
+          <a class="token-link" href="https://map.tianditu.gov.cn/" target="_blank" rel="noopener noreferrer">没有 Token？去天地图官网注册申请 ↗</a>
+        </div>
+        <div class="panel-header" id="panelDragZone">
+          <div class="panel-title">
+            <h1>Fit Tool</h1>
+            <p class="subtitle">Keep 校园跑数据生成器</p>
+          </div>
+          <div class="panel-mode" id="panelMode" role="group" aria-label="面板模式">
+            <button type="button" class="mode-btn is-active" data-mode="docked">固定</button>
+            <button type="button" class="mode-btn" data-mode="free">移动</button>
+          </div>
+          <button id="gripMove" class="grip-move" type="button" title="拖动移动面板，双击复位" aria-label="拖动移动面板，双击复位">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+              <circle cx="3" cy="2" r="1.3"/><circle cx="9" cy="2" r="1.3"/>
+              <circle cx="3" cy="6" r="1.3"/><circle cx="9" cy="6" r="1.3"/>
+              <circle cx="3" cy="10" r="1.3"/><circle cx="9" cy="10" r="1.3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="section-divider"></div>
+        <div class="form-group">
+          <label for="hrRest">静息心率</label>
+          <input id="hrRest" type="number" min="30" max="120" value="60" />
+        </div>
+        <div class="form-group">
+          <label for="hrMax">最大心率</label>
+          <input id="hrMax" type="number" min="100" max="220" value="180" />
+        </div>
+        <div class="form-group">
+          <label for="weightInput">体重（kg）</label>
+          <input id="weightInput" type="number" min="30" max="150" step="1" value="65"> <!-- ========== 新增：体重数据 ========== -->
+        </div>
+        <div class="form-group">
+          <label>起始坐标（可选）</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input id="startLat" type="number" step="any" placeholder="纬度" style="flex:1;">
+            <span style="color:#707072;">,</span>
+            <input id="startLng" type="number" step="any" placeholder="经度" style="flex:1;">
+          </div>
+          <button id="goToCoordBtn" type="button" style="font-size:12px;padding:6px 14px;margin-top:6px;">定位到坐标</button>
+        </div>
+        <div class="form-group">
+          <label for="lapCount">圈数（重复次数）</label>
+          <input id="lapCount" type="number" min="1" value="1" />
+        </div>
+        <div class="form-group">
+          <label for="exportCount">导出份数</label>
+          <input id="exportCount" type="number" min="1" value="1" />
+        </div>
+        <div class="form-group">
+          <label for="smoothness">轨迹平滑度（0=原样折线，越大越平滑）</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="smoothness" type="range" min="0" max="20" step="1" value="0" style="flex:1;" />
+            <input id="smoothnessNum" type="number" min="0" max="20" step="1" value="0" style="width:56px;text-align:center;" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input id="shuffleOrder" type="checkbox" />
+            <span>打乱文件编号顺序</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input id="randomDistance" type="checkbox" />
+            <span>随机增减公里数</span>
+          </label>
+        </div>
+        <div class="form-group" id="distanceVariationGroup" style="display:none;">
+          <label for="distanceVariation">变异幅度（%）</label>
+          <input id="distanceVariation" type="number" min="1" max="50" step="1" value="5" />
+        </div>
+        <div class="form-group" id="minKmGroup" style="display:none;">
+          <label for="minKm">最低公里数（km）</label>
+          <input id="minKm" type="number" min="0" step="0.1" value="0" />
+        </div>
+        <div class="form-group" id="maxKmGroup" style="display:none;">
+          <label for="maxKm">最高公里数（km，0=不限）</label>
+          <input id="maxKm" type="number" min="0" step="0.1" value="0" />
+        </div>
+        <div class="form-group">
+          <label for="dateMode">日期排列</label>
+          <select id="dateMode">
+            <option value="consecutive">按日期往下排</option>
+            <option value="same-day" selected>当天生成多份</option>
+            <option value="selected-date">按选择日期生成</option>
+            <option value="selected-consecutive">从选择日期往下排</option>
+          </select>
+        </div>
+        <div class="form-group" id="selectedDateGroup" style="display:none;">
+          <label for="selectedDate">选择日期</label>
+          <input id="selectedDate" type="date" />
+        </div>
+        <div class="form-group">
+          <label>随机时间区间（时刻）</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input id="startTimeMin" type="time" value="06:00" style="flex:1;" />
+            <span style="color:#707072;font-size:12px;">~</span>
+            <input id="startTimeMax" type="time" value="08:00" style="flex:1;" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>配速区间（分′秒″/km）</label>
+          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:11px;color:#707072;width:28px;">最快</span>
+            <input id="paceFastMin" type="number" min="0" step="1" value="8" style="width:42px;text-align:center;padding:6px 4px;" />
+            <span style="font-weight:700;color:#111;">′</span>
+            <input id="paceFastSec" type="number" min="0" max="59" step="1" value="0" style="width:42px;text-align:center;padding:6px 4px;" />
+            <span style="font-weight:700;color:#111;">″</span>
+            <span style="color:#707072;font-size:12px;margin:0 2px;">~</span>
+            <span style="font-size:11px;color:#707072;width:28px;">最慢</span>
+            <input id="paceSlowMin" type="number" min="0" step="1" value="9" style="width:42px;text-align:center;padding:6px 4px;" />
+            <span style="font-weight:700;color:#111;">′</span>
+            <input id="paceSlowSec" type="number" min="0" max="59" step="1" value="36" style="width:42px;text-align:center;padding:6px 4px;" />
+            <span style="font-weight:700;color:#111;">″</span>
+          </div>
+        </div>
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;">
+          <button id="rerollBtn" type="button" style="font-size:12px;padding:6px 14px;">生成随机时间和配速</button>
+          <span style="font-size:12px;color:#707072;">按上方区间重新随机所有份数</span>
+        </div>
+        <div id="exportTimes" class="export-times"></div>
+        <div id="distanceInfo" class="distance-info"></div>
+        <div class="form-group buttons">
+          <button id="getLocationBtn" type="button">尝试获取当前位置</button> <!-- ========== 新增：定位按钮 ========== -->
+          <button id="undoPoint" type="button">撤销上一步</button>
+          <button id="clearRoute" type="button">清除轨迹</button>
+          <button id="exportRouteBtn" type="button">导出轨迹</button>
+          <button id="importRouteBtn" type="button">导入轨迹</button>
+          <input id="importFileInput" type="file" accept=".json,application/json" style="display:none;" />
+          <button id="previewBtn" type="button">预览曲线</button>
+          <button id="generateFit" type="button">生成 FIT 文件</button>
+        </div>
+        <div id="message" class="message"></div>
+        <div class="preview-panel">
+          <div class="preview-chart">
+            <h2>配速预览（min/km）</h2>
+            <canvas id="paceChart"></canvas>
+          </div>
+          <div class="preview-chart">
+            <h2>心率预览（bpm）</h2>
+            <canvas id="hrChart"></canvas>
+          </div>
+          <div class="preview-chart">
+            <h2>步频预览（spm）</h2>
+            <canvas id="cadenceChart"></canvas>
+          </div>
+        </div>
+        <div id="liveInfo" class="live-info"></div>
+        <p class="tip">在右侧地图上点击绘制轨迹点，系统会自动连成路线。</p>
+      </div>
+      <div id="map"></div>
+      <div
+        id="resizeHandle"
+        class="resize-handle"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="拖拽调整面板宽度，双击复位"
+        tabindex="0"
+      ></div>
+      <div
+        id="resizeHandleB"
+        class="resize-handle"
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="拖拽调整面板高度，双击复位"
+        tabindex="0"
+      ></div>
+      <div
+        id="resizeHandleC"
+        class="resize-handle"
+        role="separator"
+        aria-label="拖拽同时调整面板宽度和高度"
+        tabindex="0"
+      ></div>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+      integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+      crossorigin="anonymous"
+    ></script>
+    <script src="./jszip.min.js"></script>
+    <script src="./main.js"></script>
+  </body>
+</html>

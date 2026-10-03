@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Bundled Node.js runtime (binaries, not source)
+node-v24.12.0-win-x64/
+
+# Runtime artifacts
+.port
+*.log
+
+# OS junk
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# 用户本地轨迹（含个人常跑地点，不上传）
+route/

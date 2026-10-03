@@ -1,0 +1,20 @@
+{
+  "name": "fit-web-tool",
+  "version": "1.5.0",
+  "description": "Draw a running route on the map and generate Garmin FIT activity files (Keep campus run ready), with 1Hz simulated heart rate / cadence / power data",
+  "main": "server.js",
+  "type": "module",
+  "license": "CC-BY-NC-SA-4.0",
+  "author": "Ruomu Yunxi (original Fit Tool), enhanced by community contributors",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@garmin/fitsdk": "^21.178.0",
+    "express": "^4.18.2"
+  }
+}

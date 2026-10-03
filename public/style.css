@@ -1,0 +1,793 @@
+/* ===== Apple-style Design System ===== */
+/* 语义色：label #111 / secondary rgba(60,60,67,.6) / separator rgba(60,60,67,.15)
+   accent #007AFF / destructive #FF3B30 / success #34C759 / fill rgba(120,120,128,.12) */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  /* Mac/iOS 上直接用系统 SF；Windows 上退到 Inter（SF 的标准替代） */
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text",
+    "Segoe UI", "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+  background: #000;
+  color: #111111;
+  overflow: hidden;
+  font-optical-sizing: auto;
+}
+
+/* ===== Main Layout：全屏地图 + 悬浮面板（Apple Maps 式） ===== */
+#app {
+  position: relative;
+  height: 100vh;
+}
+
+/* ===== Sidebar：悬浮毛玻璃面板（位置/尺寸全部变量驱动，可自由调整） ===== */
+.sidebar {
+  position: absolute;
+  top: var(--panel-top, 12px);
+  left: var(--panel-left, 12px);
+  height: var(--panel-h, calc(100vh - 24px));
+  width: var(--sidebar-w, 380px);
+  min-width: 280px;
+  max-width: 600px;
+  min-height: 240px;
+  box-sizing: border-box;
+  padding: 20px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: rgba(251, 251, 253, 0.78);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border-radius: 20px;
+  box-shadow:
+    0 12px 44px rgba(0, 0, 0, 0.18),
+    0 2px 10px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.55);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 1100;
+  transition:
+    width 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    height 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    top 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    left 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 3px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(60, 60, 67, 0.28);
+  border-radius: 9999px;
+}
+
+/* ===== Panel Header：拖动移动面板的区域（右上角抓手 + 标题区） ===== */
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -2px -6px 0 0;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+body.panel-moving .panel-header,
+.panel-header:active {
+  cursor: grabbing;
+}
+
+.panel-title {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.grip-move {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: rgba(60, 60, 67, 0.35);
+  cursor: grab;
+}
+
+.grip-move:hover {
+  background: rgba(120, 120, 128, 0.14);
+  color: rgba(60, 60, 67, 0.65);
+}
+
+.grip-move:active {
+  cursor: grabbing;
+  transform: scale(0.94);
+}
+
+/* ===== 面板模式：iOS 分段控件（固定 / 移动） ===== */
+.panel-mode {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+  padding: 2px;
+  background: rgba(120, 120, 128, 0.12);
+  border-radius: 9px;
+}
+
+.mode-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 590;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(60, 60, 67, 0.65);
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mode-btn:hover {
+  color: #111111;
+}
+
+.mode-btn.is-active {
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+/* 固定模式：面板停靠，隐藏移动/调高相关控件（调宽把手保留，与原版一致） */
+body.panel-docked .grip-move,
+body.panel-docked #resizeHandleB,
+body.panel-docked #resizeHandleC {
+  display: none;
+}
+
+body.panel-docked .panel-header {
+  cursor: default;
+}
+
+/* Title：SF 大标题风格（负字距、去大写、紧行距） */
+.panel-title h1 {
+  font-size: 27px;
+  font-weight: 700;
+  margin: 0;
+  color: #111111;
+  letter-spacing: -0.022em;
+  line-height: 1.05;
+}
+
+.panel-title .subtitle {
+  font-size: 13px;
+  color: rgba(60, 60, 67, 0.6);
+  margin: 4px 0 0;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+}
+
+/* ===== Form Groups ===== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(60, 60, 67, 0.6);
+  letter-spacing: -0.003em;
+  padding-left: 4px;
+}
+
+/* ===== 天地图 Token 自助管理 ===== */
+.token-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.token-row input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  padding: 7px 10px;
+}
+
+.token-row button {
+  flex: 0 0 auto;
+  background: rgba(0, 122, 255, 0.12);
+  color: #007AFF;
+  font-size: 12px;
+  padding: 4px 14px;
+}
+
+.token-row button:hover {
+  background: rgba(0, 122, 255, 0.18);
+}
+
+.token-link {
+  font-size: 12px;
+  color: #007AFF;
+  text-decoration: none;
+  padding-left: 4px;
+}
+
+.token-link:hover {
+  text-decoration: underline;
+}
+
+/* ===== Checkbox ===== */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #111111;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #007AFF;
+  cursor: pointer;
+}
+
+/* ===== Inputs：iOS 填充式字段（无边框、连续圆角、蓝色焦点环） ===== */
+input[type="number"],
+input[type="datetime-local"],
+input[type="time"],
+select {
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  border-radius: 11px;
+  border: none;
+  background: rgba(120, 120, 128, 0.12);
+  outline: none;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  color: #111111;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%238E8E93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+input[type="number"]:focus,
+input[type="datetime-local"]:focus,
+input[type="time"]:focus,
+select:focus {
+  background: #ffffff;
+  box-shadow: 0 0 0 3.5px rgba(0, 122, 255, 0.28);
+}
+
+input[type="number"]:hover,
+input[type="datetime-local"]:hover,
+input[type="time"]:hover,
+select:hover {
+  background: rgba(120, 120, 128, 0.16);
+}
+
+/* Hide number spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ===== Buttons：胶囊按钮，按下即时缩放反馈 ===== */
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 590;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 999px;
+  border: none;
+  transition: transform 0.1s ease-out, background 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: -0.003em;
+  white-space: nowrap;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:focus-visible,
+input:focus-visible + * {
+  outline: none;
+  box-shadow: 0 0 0 3.5px rgba(0, 122, 255, 0.28);
+}
+
+/* Primary CTA — Apple 蓝 */
+#generateFit {
+  background: #007AFF;
+  color: #ffffff;
+  padding: 11px 26px;
+  font-size: 15px;
+}
+
+#generateFit:hover {
+  background: #0071e8;
+}
+
+/* 定位 — 蓝色浅染 */
+#getLocationBtn {
+  background: rgba(0, 122, 255, 0.12);
+  color: #007AFF;
+  font-size: 13px;
+  padding: 8px 16px;
+}
+
+#getLocationBtn:hover {
+  background: rgba(0, 122, 255, 0.18);
+}
+
+/* Secondary — 中性填充 */
+#previewBtn,
+#rerollBtn,
+#exportRouteBtn,
+#importRouteBtn {
+  background: rgba(120, 120, 128, 0.12);
+  color: #111111;
+}
+
+#previewBtn:hover,
+#rerollBtn:hover,
+#exportRouteBtn:hover,
+#importRouteBtn:hover {
+  background: rgba(120, 120, 128, 0.2);
+}
+
+#undoPoint {
+  background: rgba(120, 120, 128, 0.12);
+  color: #111111;
+  font-size: 13px;
+  padding: 8px 16px;
+}
+
+#undoPoint:hover {
+  background: rgba(120, 120, 128, 0.2);
+}
+
+/* Destructive — 红色浅染 */
+#clearRoute {
+  background: rgba(255, 59, 48, 0.1);
+  color: #FF3B30;
+  font-size: 13px;
+  padding: 8px 16px;
+}
+
+#clearRoute:hover {
+  background: rgba(255, 59, 48, 0.16);
+}
+
+/* ===== Range Slider ===== */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(120, 120, 128, 0.2);
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+input[type="range"]:focus {
+  box-shadow: 0 0 0 3.5px rgba(0, 122, 255, 0.28);
+}
+
+/* ===== Map：全屏铺底 ===== */
+#map {
+  position: absolute;
+  inset: 0;
+  background: #e8e8e6;
+}
+
+/* ===== Messages ===== */
+.message {
+  min-height: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(60, 60, 67, 0.6);
+  padding: 8px 12px;
+  border-radius: 11px;
+  background: rgba(120, 120, 128, 0.12);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.message:empty {
+  padding: 0;
+  background: transparent;
+}
+
+.message.error {
+  color: #FF3B30;
+  background: rgba(255, 59, 48, 0.1);
+}
+
+/* ===== Distance Info ===== */
+.distance-info {
+  min-height: 20px;
+  font-size: 13px;
+  font-weight: 590;
+  color: #111111;
+  padding: 10px 14px;
+  border-radius: 11px;
+  background: rgba(120, 120, 128, 0.12);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Export Times ===== */
+.export-times {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-time-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(120, 120, 128, 0.1);
+}
+
+.export-time-row span {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(60, 60, 67, 0.6);
+  min-width: 42px;
+  letter-spacing: 0;
+}
+
+.export-time-row input[type="datetime-local"] {
+  flex: 1.2;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.export-pace-min,
+.export-pace-sec {
+  width: 44px;
+  font-size: 12px;
+  padding: 6px 4px;
+  text-align: center;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+/* ===== Preview Panel ===== */
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preview-chart {
+  border: none;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(120, 120, 128, 0.1);
+  transition: background 0.15s ease;
+}
+
+.preview-chart h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 590;
+  color: rgba(60, 60, 67, 0.6);
+  letter-spacing: -0.003em;
+}
+
+.preview-chart canvas {
+  width: 100%;
+  height: 100px;
+}
+
+/* ===== Live Info ===== */
+.live-info {
+  min-height: 20px;
+  font-size: 14px;
+  font-weight: 590;
+  color: #111111;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(120, 120, 128, 0.1);
+  letter-spacing: -0.003em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Tip ===== */
+.tip {
+  font-size: 12px;
+  color: rgba(60, 60, 67, 0.6);
+  padding: 8px 12px;
+  border-radius: 11px;
+  background: rgba(120, 120, 128, 0.1);
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* ===== Divider ===== */
+.section-divider {
+  height: 1px;
+  background: rgba(60, 60, 67, 0.14);
+  margin: 2px 0;
+}
+
+/* ===== Attribution ===== */
+.leaflet-control-attribution {
+  background: rgba(251, 251, 253, 0.72) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+  border: none !important;
+  border-radius: 8px 0 0 0;
+  box-shadow: none !important;
+  color: rgba(60, 60, 67, 0.75);
+}
+
+/* ===== Location Marker ===== */
+.current-location-marker {
+  background: transparent;
+  border: none;
+}
+
+.location-pulse {
+  width: 18px;
+  height: 18px;
+  background: #007AFF;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.5);
+  animation: pulse 2s infinite;
+  position: relative;
+}
+
+.location-pulse::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.5); }
+  50% { box-shadow: 0 0 0 10px rgba(0, 122, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0); }
+}
+
+/* ===== Popup ===== */
+.leaflet-popup-content {
+  margin: 12px 16px;
+  line-height: 1.55;
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: -0.003em;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+}
+
+/* ===== Panel Resize Handles ===== */
+/* 把手不放在 .sidebar 内部：面板可滚动，其内部绝对定位的元素会随内容滚出可视区。
+   全部挂在 #app 上，用与面板共享的 CSS 变量贴在面板可视边缘。 */
+.resize-handle {
+  position: absolute;
+  z-index: 1101;
+  touch-action: none;
+}
+
+/* 右缘：调宽 */
+#resizeHandle {
+  top: var(--panel-top, 12px);
+  height: var(--panel-h, calc(100vh - 24px));
+  left: calc(var(--panel-left, 12px) + var(--sidebar-w, 380px) - 5px);
+  width: 10px;
+  cursor: col-resize;
+}
+
+#resizeHandle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 4px;
+  border-radius: 9999px;
+  background: rgba(60, 60, 67, 0.22);
+  transition: background 0.15s ease;
+}
+
+/* 底缘：调高 */
+#resizeHandleB {
+  left: var(--panel-left, 12px);
+  top: calc(var(--panel-top, 12px) + var(--panel-h, calc(100vh - 24px)) - 5px);
+  width: var(--sidebar-w, 380px);
+  height: 10px;
+  cursor: ns-resize;
+}
+
+#resizeHandleB::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 3px;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(60, 60, 67, 0.22);
+  transition: background 0.15s ease;
+}
+
+/* 右下角：宽 + 高 同时调 */
+#resizeHandleC {
+  left: calc(var(--panel-left, 12px) + var(--sidebar-w, 380px) - 7px);
+  top: calc(var(--panel-top, 12px) + var(--panel-h, calc(100vh - 24px)) - 7px);
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+}
+
+#resizeHandleC::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 2.5px solid rgba(60, 60, 67, 0.35);
+  border-bottom: 2.5px solid rgba(60, 60, 67, 0.35);
+  border-bottom-right-radius: 5px;
+  transition: border-color 0.15s ease;
+}
+
+.resize-handle:hover::after,
+.resize-handle:focus-visible::after {
+  background: rgba(60, 60, 67, 0.45);
+}
+
+#resizeHandleC:hover::after,
+#resizeHandleC:focus-visible::after {
+  background: transparent;
+  border-color: rgba(60, 60, 67, 0.6);
+}
+
+.resize-handle.dragging::after {
+  background: #007AFF;
+}
+
+#resizeHandleC.dragging::after {
+  background: transparent;
+  border-color: #007AFF;
+}
+
+.resize-handle:focus-visible {
+  outline: 2px solid #007AFF;
+  outline-offset: -2px;
+  border-radius: 9999px;
+}
+
+body.resizing,
+body.panel-moving {
+  cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+body.resizing .sidebar,
+body.panel-moving .sidebar {
+  transition: none;
+}
+
+/* ===== Responsive：小屏改为底部面板（bottom sheet，位置尺寸不可调） ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    top: auto;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    max-width: none;
+    height: auto;
+    max-height: 55vh;
+    border-radius: 18px;
+  }
+  /* 小屏下面板固定，隐藏拖动抓手与全部缩放把手 */
+  .resize-handle,
+  .grip-move {
+    display: none;
+  }
+  .panel-header {
+    cursor: default;
+  }
+}
+
+/* ===== Accessibility：减弱动效 / 减弱透明度 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .resize-handle::after,
+  button,
+  .message {
+    transition: none !important;
+  }
+  .location-pulse {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .sidebar {
+    background: #fbfbfd;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .leaflet-control-attribution {
+    background: #fbfbfd !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
